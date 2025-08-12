@@ -1,37 +1,38 @@
-name: Build & Release .deb
-
-on:
-  push:
-    tags:
-      - 'v*'
-
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set version from tag
-        id: vars
-        run: |
-          VER="${GITHUB_REF_NAME#v}"
-          echo "VER=$VER" >> $GITHUB_OUTPUT
-
-      - name: Prepare build folder
-        run: |
-          cp -r . "astral-matrix_${{ steps.vars.outputs.VER }}_all"
-          find "astral-matrix_${{ steps.vars.outputs.VER }}_all" -name ".git" -type d -prune -exec rm -rf {} +
-
-      - name: Build .deb
-        run: |
-          dpkg-deb --build "astral-matrix_${{ steps.vars.outputs.VER }}_all"
-          ls -l "astral-matrix_${{ steps.vars.outputs.VER }}_all.deb"
-
-      - name: Upload artifact to release
-        uses: softprops/action-gh-release@v2
-        with:
-          files: |
-            astral-matrix_${{ steps.vars.outputs.VER }}_all.deb
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+     1	name: Build & Release .deb
+     2	
+     3	on:
+     4	  push:
+     5	    tags:
+     6	      - 'v*'
+     7	
+     8	jobs:
+     9	  build:
+    10	    runs-on: ubuntu-latest
+    11	    steps:
+    12	      - name: Checkout
+    13	        uses: actions/checkout@v4
+    14	
+    15	      - name: Set version from tag
+    16	        id: vars
+    17	        run: |
+    18	          VER="${GITHUB_REF_NAME#v}"
+    19	          echo "VER=$VER" >> $GITHUB_OUTPUT
+    20	
+    21	      - name: Prepare build folder
+    22	        run: |
+    23	          rm -rf "astral-matrix_${{ steps.vars.outputs.VER }}_all" || true
+    24	          cp -r . "astral-matrix_${{ steps.vars.outputs.VER }}_all"
+    25	          find "astral-matrix_${{ steps.vars.outputs.VER }}_all" -name ".git" -type d -prune -exec rm -rf {} +
+    26	
+    27	      - name: Build .deb
+    28	        run: |
+    29	          dpkg-deb --build "astral-matrix_${{ steps.vars.outputs.VER }}_all"
+    30	          ls -l "astral-matrix_${{ steps.vars.outputs.VER }}_all.deb"
+    31	
+    32	      - name: Upload artifact to release
+    33	        uses: softprops/action-gh-release@v2
+    34	        with:
+    35	          files: |
+    36	            astral-matrix_${{ steps.vars.outputs.VER }}_all.deb
+    37	        env:
+    38	          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
