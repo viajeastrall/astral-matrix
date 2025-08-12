@@ -18,16 +18,46 @@ jobs:
           VER="${GITHUB_REF_NAME#v}"
           echo "VER=$VER" >> $GITHUB_OUTPUT
 
-      - name: Prepare build folder
+      - name: Prepare staging
         run: |
-          rm -rf "temp_build_${{ steps.vars.outputs.VER }}" || true
-          cp -r . "temp_build_${{ steps.vars.outputs.VER }}"
-          find "temp_build_${{ steps.vars.outputs.VER }}" -name ".git" -type d -prune -exec rm -rf {} +
+          STAGE="astral-matrix_${{ steps.vars.outputs.VER }}_all"
+          rm -rf "$STAGE"
+          mkdir -p "$STAGE"
+
+          # Copia solo lo que forma parte del paquete .deb
+          rsync -av --delete \
+            --exclude='.git' --exclude='.github' --exclude='*.deb' \
+            --include='DEBIAN/***' --include='usr/***' --include='lib/***' \
+            --exclude='*' ./ "$STAGE"/
+
+          echo "🧱 Estructura staging:"
+          find "$STAGE" -maxdepth 4 -type d | sort
+
+      - name: Sanity checks (control, permisos, line endings)
+        run: |
+          STAGE="astral-matrix_${{ steps.vars.outputs.VER }}_all"
+          test -f "$STAGE/DEBIAN/control" || { echo "❌ Falta DEBIAN/control"; exit 1; }
+
+          # Normaliza permisos
+          chmod 0644 "$STAGE/DEBIAN/control" || true
+          [ -f "$STAGE/DEBIAN/postinst" ] && chmod 0755 "$STAGE/DEBIAN/postinst" || true
+          [ -f "$STAGE/DEBIAN/prerm" ]    && chmod 0755 "$STAGE/DEBIAN/prerm"    || true
+          find "$STAGE/usr/local/bin" -type f -maxdepth 1 -exec chmod 0755 {} \; 2>/dev/null || true
+          find "$STAGE/usr/local/share/astral-matrix" -type f -maxdepth 1 -exec chmod 0755 {} \; 2>/dev/null || true
+          [ -d "$STAGE/lib/systemd/system" ] && chmod 0644 "$STAGE"/lib/systemd/system/* 2>/dev/null || true
+
+          # LF only en archivos DEBIAN (evita problemas de dpkg-deb)
+          sed -i 's/\r$//' "$STAGE/DEBIAN/control" 2>/dev/null || true
+          [ -f "$STAGE/DEBIAN/postinst" ] && sed -i 's/\r$//' "$STAGE/DEBIAN/postinst" || true
+          [ -f "$STAGE/DEBIAN/prerm" ]    && sed -i 's/\r$//' "$STAGE/DEBIAN/prerm"    || true
 
       - name: Build .deb
         run: |
-          dpkg-deb --build "temp_build_${{ steps.vars.outputs.VER }}" "astral-matrix_${{ steps.vars.outputs.VER }}_all.deb"
-          ls -l "astral-matrix_${{ steps.vars.outputs.VER }}_all.deb"
+          STAGE="astral-matrix_${{ steps.vars.outputs.VER }}_all"
+          dpkg-deb --build "$STAGE"
+          ls -l "$STAGE.deb"
+          dpkg-deb -I "$STAGE.deb" || true
+          dpkg-deb -c "$STAGE.deb" | head -20 || true
 
       - name: Upload artifact to release
         uses: softprops/action-gh-release@v2
