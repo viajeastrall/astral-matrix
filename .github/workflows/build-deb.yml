@@ -1,0 +1,37 @@
+name: Build & Release .deb
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set version from tag
+        id: vars
+        run: |
+          VER="${GITHUB_REF_NAME#v}"
+          echo "VER=$VER" >> $GITHUB_OUTPUT
+
+      - name: Prepare build folder
+        run: |
+          cp -r . "astral-matrix_${{ steps.vars.outputs.VER }}_all"
+          find "astral-matrix_${{ steps.vars.outputs.VER }}_all" -name ".git" -type d -prune -exec rm -rf {} +
+
+      - name: Build .deb
+        run: |
+          dpkg-deb --build "astral-matrix_${{ steps.vars.outputs.VER }}_all"
+          ls -l "astral-matrix_${{ steps.vars.outputs.VER }}_all.deb"
+
+      - name: Upload artifact to release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            astral-matrix_${{ steps.vars.outputs.VER }}_all.deb
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

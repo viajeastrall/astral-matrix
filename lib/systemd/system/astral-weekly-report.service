@@ -1,0 +1,6 @@
+[Unit]
+Description=Astral Matrix Weekly Health Report
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/astral-report

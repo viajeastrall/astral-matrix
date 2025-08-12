@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+set -e
+
+BIN=/usr/local/bin
+SHARE=/usr/local/share/astral-matrix
+UNITDIR=/lib/systemd/system
+
+# permisos
+chmod 0755 "$SHARE"/*.sh || true
+chmod 0755 "$BIN"/astral-* 2>/dev/null || true
+chmod 0644 "$UNITDIR"/astral-weekly-report.* 2>/dev/null || true
+
+# recarga units
+systemctl daemon-reload || true
+
+# habilita timer semanal (si existe)
+if [ -f "$UNITDIR/astral-weekly-report.timer" ]; then
+  systemctl enable --now astral-weekly-report.timer || true
+fi
+
+echo "Astral-Matrix 2.2.0 instalado. Comandos: astral-verify, astral-perf, astral-report"
+exit 0

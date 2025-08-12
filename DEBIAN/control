@@ -1,0 +1,10 @@
+Package: astral-matrix
+Version: 2.2.0
+Section: utils
+Priority: optional
+Architecture: all
+Maintainer: Arvizu <arvizu@example.com>
+Depends: bash, coreutils, systemd, dmidecode, pciutils, procps, grep, gawk
+Recommends: linux-tools-generic | cpupower, system76-power, nvme-cli, stress-ng, ryzenadj, nvidia-utils
+Description: Astral-Matrix — Verificador/optimizador seguro para AMD Ryzen (Pop!_OS/Ubuntu)
+ Incluye astral-verify (auditoría BIOS/OC), astral-perf (perfil rendimiento AMD) y reportes automáticos vía systemd.
