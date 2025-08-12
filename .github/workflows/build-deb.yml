@@ -20,13 +20,13 @@ jobs:
 
       - name: Prepare build folder
         run: |
-          rm -rf "astral-matrix_${{ steps.vars.outputs.VER }}_all" || true
-          cp -r . "astral-matrix_${{ steps.vars.outputs.VER }}_all"
-          find "astral-matrix_${{ steps.vars.outputs.VER }}_all" -name ".git" -type d -prune -exec rm -rf {} +
+          rm -rf "build_folder" || true
+          cp -r . "build_folder"
+          find "build_folder" -name ".git" -type d -prune -exec rm -rf {} +
 
       - name: Build .deb
         run: |
-          dpkg-deb --build "astral-matrix_${{ steps.vars.outputs.VER }}_all"
+          dpkg-deb --build "build_folder" "astral-matrix_${{ steps.vars.outputs.VER }}_all.deb"
           ls -l "astral-matrix_${{ steps.vars.outputs.VER }}_all.deb"
 
       - name: Upload artifact to release
